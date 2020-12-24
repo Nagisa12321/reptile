@@ -31,12 +31,12 @@
     <distributionManagement>
         <repository>
             <id>jtchen_hosted</id>
-            <url>http://localhost:8081/repository/jtchen_hosted/</url>
+            <url>http://192.168.1.202:8081/repository/jtchen_hosted/</url>
         </repository>
 
         <snapshotRepository>
             <id>jtchen_group</id>
-            <url>http://localhost:8081/repository/jtchen_group/</url>
+            <url>http://192.168.1.202:8081/repository/jtchen_group/</url>
         </snapshotRepository>
     </distributionManagement>
 
