@@ -12,8 +12,11 @@ import java.nio.charset.StandardCharsets;
  ************************************************/
 @Deprecated
 public class GetSource {
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     public static void download(String url, String filename) {
-        try (var outputStream = new FileOutputStream("./src/main/resources/" + filename)) {
+        var fi = new File("./src/main/resources/" + filename);
+        fi.mkdirs();
+        try (var outputStream = new FileOutputStream(fi.getAbsoluteFile() +  "\\" + filename + ".html")) {
             URLConnection connection = new URL(url).openConnection
                     (/*new Proxy(Proxy.Type.HTTP, new InetSocketAddress("localhost", 1080))*/);
             Reader r = new InputStreamReader(new BufferedInputStream(connection.getInputStream()));
