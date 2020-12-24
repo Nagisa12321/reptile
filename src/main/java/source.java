@@ -17,9 +17,11 @@ public class source {
             while ((c = r.read()) != -1) {
                 out.print((char) c);
             }
+            r.close();
         } catch (MalformedURLException e) {
             System.err.println("is not a URL");
         } catch (IOException e) {
+            System.err.println("œ¬‘ÿ¥ÌŒÛ£°");
             System.err.println(e);
         }
     }
