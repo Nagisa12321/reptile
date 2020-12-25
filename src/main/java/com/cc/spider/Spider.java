@@ -37,49 +37,30 @@ public class Spider {
 
             //遍历爬取到的元素 进行处理
             for (int i = 0; i < Times.size(); i++) {
-                //生成地址
+                //生成子链接地址尾部，并得到时间
                 String urlTail = LinksAndTitles.get(i).attr("href");
                 String time = Times.get(i).toString().substring(19, 29);
                 if (urlTail.indexOf('.') == 0)
                     urlTail = urlTail.substring(urlTail.indexOf('/') + 1);
 
+                //获得子链接
                 String theUrl = "http://news.gzhu.edu.cn/" + urlTail;
 
-
-                /* 冲到URL里面获取图片链接 */
+                //获取图片链接 以Elements的形式保存
                 Document doc1 = Jsoup.connect(theUrl)./*
                         proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("localhost", 1080))).*/get();
-                //根据key为id,value以line_u开头得到元素
                 Elements container1 = doc1.getElementsByAttributeValueStarting("style", "text-align:");
-
-                /*
-                container1.removeIf(x ->
-                        !x.toString().startsWith("<p style=\"text-align: center;\"><img width=\"500\""));
-                */
-
-                //重新生成doc以便dom操作
                 Document containerDoc1 = Jsoup.parse(container1.toString());
-                //图片链接获取
                 Elements pngs = containerDoc1.select("img[width]");
 
-                //得到标题
+                //获取标题
                 String theTitle = LinksAndTitles.get(i).attr("title");
+
+                //下载相应资源
                 System.out.println("时间: " + time);
                 System.out.println("标题: " + theTitle);
-                //下载
-//                GetSource.download(theUrl, theTitle);
-                theTitle = RemoveSpaces(theTitle);
-
-                //下载图片
-                for (Element png : pngs) {
-                    String tail = png.attr("src");
-                    String pngUrl = "http://news.gzhu.edu.cn" + tail;
-                    Runnable imgDl = new ImgDownload(pngUrl, theTitle, tail);
-                    pool.submit(imgDl);
-                }
-
-                Runnable htmlDl = new HtmlDownload(theUrl, theTitle);
-                pool.submit(htmlDl);
+                Runnable SourceDL = new GetSource(theUrl,theTitle,pngs);
+                pool.submit(SourceDL);
             }
 
             //获取下一页
@@ -97,37 +78,12 @@ public class Spider {
         return null;
     }
 
-    /* 去掉文件名开头、结尾的空格、特殊符号 */
-    public static String RemoveSpaces(String s) {
-        int idx = 0;
-        for (int i = 0; i < s.length(); i++)
-            if (s.charAt(i) == ' ') idx++;
-            else break;
-        s = idx == 0 ? s : s.substring(idx);
-        idx = s.length() - 1;
-        for (int i = s.length() - 1; i >= 0; i--) {
-            if (s.charAt(i) == ' ') idx--;
-            else break;
-        }
-        s = idx == s.length() - 1 ? s : s.substring(0, idx + 1);
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < s.length(); i++) {
-            if (s.charAt(i) != '"'
-                    && s.charAt(i) != '?'
-                    && s.charAt(i) != '\\'
-                    && s.charAt(i) != '/'
-                    && s.charAt(i) != ':')
-                builder.append(s.charAt(i));
-        }
-        return builder.toString();
-    }
-
     public static void main(String[] args) {
         String url = "http://news.gzhu.edu.cn/ttgd.htm";
 
-//        do {
-//            url = spider(url);
-//        } while (url != null);
+        /*do {
+            url = spider(url);
+        } while (url != null);*/
 
         for (int i = 0; i < 10; i++) {
             url = spider(url);

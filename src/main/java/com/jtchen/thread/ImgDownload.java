@@ -1,5 +1,10 @@
 package com.jtchen.thread;
 
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
 import java.io.*;
 import java.net.*;
 
@@ -10,66 +15,67 @@ import java.net.*;
  * @version 1.0
  ************************************************/
 @SuppressWarnings({"CommentedOutCode", "ResultOfMethodCallIgnored"})
-public class ImgDownload implements Runnable{
+public class ImgDownload implements Runnable {
+    private  final Elements  pngs;
+    private  final String filename;
 
-    private final URL url;
-    private final String tail;
-    private final String filename;
-
-    public ImgDownload(String url, String filename, String imgTail) throws MalformedURLException {
-        this.filename = filename;
-        this.url = new URL(url);
-        this.tail = imgTail;
+    public ImgDownload(Elements pngs,String rawFileName){
+        this.pngs = pngs;
+        filename = RemoveSpaces(rawFileName);
     }
 
     @Override
     public void run() {
-        /*var fi = new File("./src/main/resources/" + filename);
-        fi.mkdirs();*/
         try {
-            saveBinaryFile(url);
+            //下载一个页面图片
+            for (Element png : pngs) {
+                String tail = png.attr("src");
+                String pngUrl = "http://news.gzhu.edu.cn" + tail;
+                saveBinaryFile(pngUrl,tail);
+            }
+
         } catch (IOException e) {
             System.err.println(e.toString() + "保存文件错误!");
         }
     }
 
-    private void saveBinaryFile(URL u) throws IOException {
-        URLConnection uc =
-                u.openConnection(/*new Proxy(Proxy.Type.HTTP, new InetSocketAddress("localhost", 1080))*/);
-        String contentType = uc.getContentType();
-        int contentLength = uc.getContentLength();
-        if (contentType.startsWith("text/") || contentLength == -1) {
-            throw new IOException("This is not a binary file.");
-        }
-
-        try (InputStream raw = uc.getInputStream()) {
-            InputStream in = new BufferedInputStream(raw);
-            byte[] data = new byte[contentLength];
-            int offset = 0;
-            while (offset < contentLength) {
-                int bytesRead = in.read(data, offset, data.length - offset);
-                if (bytesRead == -1) break;
-                offset += bytesRead;
-            }
-
-            if (offset != contentLength) {
-                throw new IOException("Only read " + offset
-                        + " bytes; Expected " + contentLength + " bytes");
-            }
+    private void saveBinaryFile(String u,String tail) throws IOException {
+            //简单搞搞文件名
             String tmp = tail.substring(0, 17);
             var fi = new File("./src/main/resources/" + filename + tmp);
-            /*
-            var fi = new File("D:\\" + tmp);
-            */
             fi.mkdirs();
 
-            try (FileOutputStream fout = new FileOutputStream("./src/main/resources/" + filename + tail)) {
-            /*
-            try (FileOutputStream fout = new FileOutputStream("D:\\" + tail)) {
-            */
-                fout.write(data);
-                fout.flush();
-            }
+            //下载
+            Connection.Response resultImageResponse = Jsoup.connect(u).ignoreContentType(true).execute();
+            FileOutputStream out = new FileOutputStream("./src/main/resources/" + filename + tail);
+            out.write(resultImageResponse.bodyAsBytes());
+            out.close();
+
+    }
+
+
+    /* 去掉文件名开头、结尾的空格、特殊符号 */
+    public static String RemoveSpaces(String s) {
+        int idx = 0;
+        for (int i = 0; i < s.length(); i++)
+            if (s.charAt(i) == ' ') idx++;
+            else break;
+        s = idx == 0 ? s : s.substring(idx);
+        idx = s.length() - 1;
+        for (int i = s.length() - 1; i >= 0; i--) {
+            if (s.charAt(i) == ' ') idx--;
+            else break;
         }
+        s = idx == s.length() - 1 ? s : s.substring(0, idx + 1);
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < s.length(); i++) {
+            if (s.charAt(i) != '"'
+                    && s.charAt(i) != '?'
+                    && s.charAt(i) != '\\'
+                    && s.charAt(i) != '/'
+                    && s.charAt(i) != ':')
+                builder.append(s.charAt(i));
+        }
+        return builder.toString();
     }
 }

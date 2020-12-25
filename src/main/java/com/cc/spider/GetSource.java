@@ -1,5 +1,9 @@
 package com.cc.spider;
 
+import com.jtchen.thread.HtmlDownload;
+import com.jtchen.thread.ImgDownload;
+import org.jsoup.select.Elements;
+
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
@@ -11,7 +15,22 @@ import java.nio.charset.StandardCharsets;
  * @version 1.0
  ************************************************/
 @Deprecated
-public class GetSource {
+public class GetSource implements Runnable{
+    private final Elements pngs;
+    private final String url;
+    private final String rawFileName;
+    public GetSource(String url, String rawFileName,Elements pngs){
+        this.pngs = pngs;
+        this.rawFileName = rawFileName;
+        this.url = url;
+    }
+    @Override
+    public void run() {
+        ImgDownload imgDL = new ImgDownload(pngs,rawFileName);
+        HtmlDownload htmlDL = new HtmlDownload(url,rawFileName);
+        imgDL.run();
+        htmlDL.run();
+    }
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public static void download(String url, String filename) {
         var fi = new File("./src/main/resources/" + filename);
@@ -54,4 +73,5 @@ public class GetSource {
             }
         }
     }
+
 }
