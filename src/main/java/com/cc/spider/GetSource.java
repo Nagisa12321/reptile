@@ -1,5 +1,8 @@
+package com.cc.spider;
+
 import java.io.*;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 
 /************************************************
  *
@@ -7,38 +10,47 @@ import java.net.*;
  * @date 2020/12/19 1:39
  * @version 1.0
  ************************************************/
-public class source {
-    public  static void download(String url,String filename){
-        try (var out = new PrintStream("./src/main/resources/"+filename)) {
+@Deprecated
+public class GetSource {
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    public static void download(String url, String filename) {
+        var fi = new File("./src/main/resources/" + filename);
+        fi.mkdirs();
+        try (var outputStream = new FileOutputStream(fi.getAbsoluteFile() +  "\\" + filename + ".html")) {
             URLConnection connection = new URL(url).openConnection
-                    (new Proxy(Proxy.Type.HTTP, new InetSocketAddress("localhost", 1080)));
+                    (/*new Proxy(Proxy.Type.HTTP, new InetSocketAddress("localhost", 1080))*/);
             Reader r = new InputStreamReader(new BufferedInputStream(connection.getInputStream()));
             int c;
             while ((c = r.read()) != -1) {
-                out.print((char) c);
+                outputStream.write(c);
+                //out.print((char) c);
             }
             r.close();
         } catch (MalformedURLException e) {
             System.err.println("is not a URL");
         } catch (IOException e) {
-            System.err.println("ÏÂÔØ´íÎó£¡");
-            System.err.println(e);
+            System.err.println("ä¸‹è½½é”™è¯¯ï¼");
+            System.err.println(e.toString());
         }
     }
+
     public static void main(String[] args) {
         if (args.length > 0) {
-            try (var out = new PrintStream("./src/main/resources/source1.html")) {
+            try (var outputStream = new FileOutputStream("./src/main/resources/test.html")) {
                 URLConnection connection = new URL(args[0]).openConnection
                         (/*new Proxy(Proxy.Type.HTTP, new InetSocketAddress("localhost", 1080))*/);
-                Reader r = new InputStreamReader(new BufferedInputStream(connection.getInputStream()));
+                Reader r = new InputStreamReader
+                        (new BufferedInputStream(connection.getInputStream()), StandardCharsets.ISO_8859_1);
                 int c;
                 while ((c = r.read()) != -1) {
-                    out.print((char) c);
+                    outputStream.write(c);
+                    //out.print((char) c);
                 }
+                r.close();
             } catch (MalformedURLException e) {
                 System.err.println("is not a URL");
             } catch (IOException e) {
-                System.err.println(e);
+                System.err.println(e.toString());
             }
         }
     }
