@@ -9,24 +9,22 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /************************************************
- *
  * @author jtchen
  * @date 2020/12/22 23:16
  * @version 1.0
  ************************************************/
+@SuppressWarnings({"CommentedOutCode", "SpellCheckingInspection"})
 public class Spider {
-    private static ExecutorService pool = Executors.newFixedThreadPool(50);
+    private static final ExecutorService pool = Executors.newFixedThreadPool(50);
 
     public static String spider(String url) {
         try {
-            Document doc = Jsoup.connect(url).
-                    proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("localhost", 1080))).get();
+            Document doc = Jsoup.connect(url)./*
+                    proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("localhost", 1080))).*/get();
             //根据key为id,value以line_u开头得到元素
             Elements container = doc.getElementsByAttributeValueStarting("id", "line_u");
             //重新生成doc以便dom操作
@@ -49,12 +47,16 @@ public class Spider {
 
 
                 /* 冲到URL里面获取图片链接 */
-                Document doc1 = Jsoup.connect(theUrl).
-                        proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("localhost", 1080))).get();
+                Document doc1 = Jsoup.connect(theUrl)./*
+                        proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("localhost", 1080))).*/get();
                 //根据key为id,value以line_u开头得到元素
                 Elements container1 = doc1.getElementsByAttributeValueStarting("style", "text-align:");
-//                container1.removeIf(x ->
-//                        !x.toString().startsWith("<p style=\"text-align: center;\"><img width=\"500\""));
+
+                /*
+                container1.removeIf(x ->
+                        !x.toString().startsWith("<p style=\"text-align: center;\"><img width=\"500\""));
+                */
+
                 //重新生成doc以便dom操作
                 Document containerDoc1 = Jsoup.parse(container1.toString());
                 //图片链接获取

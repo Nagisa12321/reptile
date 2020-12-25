@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets;
  * @date 2020/12/24 21:37
  * @version 1.0
  ************************************************/
-public class HtmlDownload implements Runnable{
+public class HtmlDownload implements Runnable {
     private final String url;
     private final String filename;
 
@@ -26,12 +26,26 @@ public class HtmlDownload implements Runnable{
         fi.mkdirs();
         try (var out = new FileOutputStream("./src/main/resources/" + filename + "/" + filename + ".html")) {
             URLConnection connection = new URL(url).openConnection
-                    (new Proxy(Proxy.Type.HTTP, new InetSocketAddress("localhost", 1080)));
+                    (/*new Proxy(Proxy.Type.HTTP, new InetSocketAddress("localhost", 1080))*/);
             Reader r = new InputStreamReader
                     (new BufferedInputStream(connection.getInputStream()), StandardCharsets.ISO_8859_1);
             int c;
+
+            String aims = "src=\""; //目标匹配字符串
+            int index = 0;
+
             while ((c = r.read()) != -1) {
                 out.write((char) c);
+
+                if (c == aims.charAt(index)) index++;//下标加一
+                else index = 0;                      //下标归零
+
+                /* 若下标匹配到aims长度说明完全匹配, 添加‘.’! */
+
+                if (index == aims.length()) {
+                    out.write('.');
+                    index = 0;
+                }
             }
             r.close();
         } catch (MalformedURLException e) {

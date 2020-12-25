@@ -4,8 +4,6 @@ import org.junit.Test;
 
 import java.net.MalformedURLException;
 
-import static org.junit.Assert.*;
-
 public class ImgDownloadTest {
 
     @Test
@@ -14,8 +12,8 @@ public class ImgDownloadTest {
         System.out.println(tail.substring(0, 17));
         ImgDownload test = new ImgDownload
                 ("http://news.gzhu.edu.cn/__local/1/2B/8D/1AF47C8B558517C7329608F09CA_409D7466_2DC5F.jpg"
-                        , ""
-                        , "/test.png");
+                        , "",
+                        "/test.png");
         test.run();
     }
 }

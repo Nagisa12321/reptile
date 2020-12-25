@@ -13,12 +13,12 @@ import java.net.*;
 public class ImgDownload implements Runnable{
 
     private final URL url;
-    private final String filename;
     private final String tail;
+    private final String filename;
 
     public ImgDownload(String url, String filename, String imgTail) throws MalformedURLException {
-        this.url = new URL(url);
         this.filename = filename;
+        this.url = new URL(url);
         this.tail = imgTail;
     }
 
@@ -35,7 +35,7 @@ public class ImgDownload implements Runnable{
 
     private void saveBinaryFile(URL u) throws IOException {
         URLConnection uc =
-                u.openConnection(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("localhost", 1080)));
+                u.openConnection(/*new Proxy(Proxy.Type.HTTP, new InetSocketAddress("localhost", 1080))*/);
         String contentType = uc.getContentType();
         int contentLength = uc.getContentLength();
         if (contentType.startsWith("text/") || contentLength == -1) {
@@ -57,12 +57,16 @@ public class ImgDownload implements Runnable{
                         + " bytes; Expected " + contentLength + " bytes");
             }
             String tmp = tail.substring(0, 17);
-//            var fi = new File("./src/main/resources/" + filename + tmp);
+            var fi = new File("./src/main/resources/" + filename + tmp);
+            /*
             var fi = new File("D:\\" + tmp);
+            */
             fi.mkdirs();
 
-//            try (FileOutputStream fout = new FileOutputStream("./src/main/resources/" + filename + tail)) {
+            try (FileOutputStream fout = new FileOutputStream("./src/main/resources/" + filename + tail)) {
+            /*
             try (FileOutputStream fout = new FileOutputStream("D:\\" + tail)) {
+            */
                 fout.write(data);
                 fout.flush();
             }
