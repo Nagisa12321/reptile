@@ -1,34 +1,40 @@
 package com.cc.spider;
 
-
-import com.jtchen.thread.HtmlDownload;
-import com.jtchen.thread.ImgDownload;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
 
 /************************************************
  * @author jtchen
  * @date 2020/12/22 23:16
  * @version 1.0
  ************************************************/
-@SuppressWarnings({"CommentedOutCode", "SpellCheckingInspection"})
-public class Spider {
-    private static final ExecutorService pool = Executors.newFixedThreadPool(50);
+@SuppressWarnings({"SpellCheckingInspection"})
+public class Spider implements Runnable {
+    private final String url;
+    private static final ExecutorService pool = Executors.newFixedThreadPool(100);
 
-    public static String spider(String url) {
+    public Spider(String url) {
+        this.url = url;
+    }
+
+    @Override
+    public void run() {
         try {
             Document doc = Jsoup.connect(url)./*
                     proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("localhost", 1080))).*/get();
-            //根据key为id,value以line_u开头得到元素
+            //根据key为id,value以line_u开头得到元素 重新生成doc以便dom操作
             Elements container = doc.getElementsByAttributeValueStarting("id", "line_u");
-            //重新生成doc以便dom操作
             Document containerDoc = Jsoup.parse(container.toString());
+
             //All I want!
             Elements LinksAndTitles = containerDoc.select("a[href]");
             Elements Times = containerDoc.select("span[class]");
@@ -59,34 +65,86 @@ public class Spider {
                 //下载相应资源
                 System.out.println("时间: " + time);
                 System.out.println("标题: " + theTitle);
-                Runnable SourceDL = new GetSource(theUrl,theTitle,pngs);
-                pool.submit(SourceDL);
+                Runnable SourceDL = new GetSource(theUrl, RemoveSpaces(theTitle), pngs);
+                SourceDL.run();
             }
 
-            //获取下一页
-            Elements nextPage = doc.getElementsByClass("Next");
-            String nextTail = nextPage.attr("href");
-            String nextP;
-            if (nextTail.startsWith("ttgd"))
-                nextP = "http://news.gzhu.edu.cn/" + nextTail;
-            else
-                nextP = "http://news.gzhu.edu.cn/ttgd/" + nextTail;
-            return nextP;
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return null;
     }
 
-    public static void main(String[] args) {
-        String url = "http://news.gzhu.edu.cn/ttgd.htm";
+    //获取所有的页面
+    public static List<String> getAllPage() {
+        List<String> allPage = new ArrayList<>();
+        try {
+            String baseUrl = "http://news.gzhu.edu.cn/";
+            allPage.add(baseUrl + "ttgd.htm");
 
-        /*do {
-            url = spider(url);
-        } while (url != null);*/
+            Document doc = Jsoup.connect(baseUrl + "ttgd.htm").get();
+            Elements nextP = doc.getElementsByClass("Next");
+            String nextTail = nextP.attr("href");
+            String nextPage;
+            nextPage = "http://news.gzhu.edu.cn/" + nextTail;
+            allPage.add(nextPage);
 
-        for (int i = 0; i < 10; i++) {
-            url = spider(url);
+            while (true) {
+                doc = Jsoup.connect(nextPage).get();
+                nextP = doc.getElementsByClass("Next");
+                nextTail = nextP.attr("href");
+                if (nextTail.equals(""))
+                    break;
+                nextPage = "http://news.gzhu.edu.cn/ttgd/" + nextTail;
+                allPage.add(nextPage);
+            }
+            return allPage;
+        } catch (IOException e) {
+            return allPage;
+        }
+
+    }
+
+    /* 去掉文件名开头、结尾的空格、特殊符号 */
+    public static String RemoveSpaces(String s) {
+        int idx = 0;
+        for (int i = 0; i < s.length(); i++)
+            if (s.charAt(i) == ' ') idx++;
+            else break;
+        s = idx == 0 ? s : s.substring(idx);
+        idx = s.length() - 1;
+        for (int i = s.length() - 1; i >= 0; i--) {
+            if (s.charAt(i) == ' ') idx--;
+            else break;
+        }
+        s = idx == s.length() - 1 ? s : s.substring(0, idx + 1);
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < s.length(); i++) {
+            if (s.charAt(i) != '"'
+                    && s.charAt(i) != '?'
+                    && s.charAt(i) != '\\'
+                    && s.charAt(i) != '/'
+                    && s.charAt(i) != ':')
+                builder.append(s.charAt(i));
+        }
+        return builder.toString();
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        System.out.println("===============================================正在获取全部页面......===============================================");
+        List<String> test = getAllPage();
+        System.out.println("一共获取到" + test.size() + "页,请输入您要爬的页数:");
+        Scanner in = new Scanner(System.in);
+        int page = Integer.parseInt(in.next());
+        if (page > test.size()) {
+            System.err.println("爬不到那么多页，呵呵");
+            return;
+        }
+
+        //一个页面一个线程
+        System.out.println("===============================================开始爬取O(∩_∩)O.===============================================");
+        for (int i = 0; i < page; ++i) {
+            Runnable spider = new Spider(test.get(i));
+            pool.submit(spider);
         }
         pool.shutdown();
     }
