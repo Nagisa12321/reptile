@@ -15,7 +15,7 @@ public class HtmlDownload implements Runnable {
     private final String filename;
 
     public HtmlDownload(String url, String filename) {
-        this.filename = filename;
+        this.filename = (filename);
         this.url = url;
     }
 
@@ -47,7 +47,9 @@ public class HtmlDownload implements Runnable {
                     index = 0;
                 }
             }
+            out.flush();
             r.close();
+
         } catch (MalformedURLException e) {
             System.err.println("is not a URL");
         } catch (IOException e) {

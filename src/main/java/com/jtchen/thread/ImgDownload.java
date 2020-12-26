@@ -1,7 +1,13 @@
 package com.jtchen.thread;
 
-import java.io.*;
-import java.net.*;
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 /************************************************
  *
@@ -9,67 +15,43 @@ import java.net.*;
  * @date 2020/12/25 0:28
  * @version 1.0
  ************************************************/
-@SuppressWarnings({"CommentedOutCode", "ResultOfMethodCallIgnored"})
-public class ImgDownload implements Runnable{
-
-    private final URL url;
-    private final String tail;
+@SuppressWarnings({"ResultOfMethodCallIgnored"})
+public class ImgDownload implements Runnable {
+    private final Elements pngs;
     private final String filename;
 
-    public ImgDownload(String url, String filename, String imgTail) throws MalformedURLException {
-        this.filename = filename;
-        this.url = new URL(url);
-        this.tail = imgTail;
+    public ImgDownload(Elements pngs, String rawFileName) {
+        this.pngs = pngs;
+        filename = rawFileName;
     }
 
     @Override
     public void run() {
-        /*var fi = new File("./src/main/resources/" + filename);
-        fi.mkdirs();*/
         try {
-            saveBinaryFile(url);
+            //下载一个页面图片
+            for (Element png : pngs) {
+                String tail = png.attr("src");
+                String pngUrl = "http://news.gzhu.edu.cn" + tail;
+                saveBinaryFile(pngUrl, tail);
+            }
+
         } catch (IOException e) {
-            System.err.println(e.toString() + "保存文件错误!");
+            System.err.println(e.toString() + "保存文件错误! filename:" + filename);
         }
     }
 
-    private void saveBinaryFile(URL u) throws IOException {
-        URLConnection uc =
-                u.openConnection(/*new Proxy(Proxy.Type.HTTP, new InetSocketAddress("localhost", 1080))*/);
-        String contentType = uc.getContentType();
-        int contentLength = uc.getContentLength();
-        if (contentType.startsWith("text/") || contentLength == -1) {
-            throw new IOException("This is not a binary file.");
-        }
+    private void saveBinaryFile(String u, String tail) throws IOException {
+        //简单搞搞文件名
+        String tmp = tail.substring(0, 17);
+        var fi = new File("./src/main/resources/" + filename + tmp);
+        fi.mkdirs();
 
-        try (InputStream raw = uc.getInputStream()) {
-            InputStream in = new BufferedInputStream(raw);
-            byte[] data = new byte[contentLength];
-            int offset = 0;
-            while (offset < contentLength) {
-                int bytesRead = in.read(data, offset, data.length - offset);
-                if (bytesRead == -1) break;
-                offset += bytesRead;
-            }
-
-            if (offset != contentLength) {
-                throw new IOException("Only read " + offset
-                        + " bytes; Expected " + contentLength + " bytes");
-            }
-            String tmp = tail.substring(0, 17);
-            var fi = new File("./src/main/resources/" + filename + tmp);
-            /*
-            var fi = new File("D:\\" + tmp);
-            */
-            fi.mkdirs();
-
-            try (FileOutputStream fout = new FileOutputStream("./src/main/resources/" + filename + tail)) {
-            /*
-            try (FileOutputStream fout = new FileOutputStream("D:\\" + tail)) {
-            */
-                fout.write(data);
-                fout.flush();
-            }
-        }
+        //下载
+        Connection.Response resultImageResponse = Jsoup.connect(u).ignoreContentType(true).execute();
+        FileOutputStream out = new FileOutputStream("./src/main/resources/" + filename + tail);
+        out.write(resultImageResponse.bodyAsBytes());
+        out.close();
     }
+
+
 }
